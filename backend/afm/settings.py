@@ -124,7 +124,7 @@ OTP_TOTP_ISSUER = config('TOTP_ISSUER', default='AFM')
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = config('EMAIL_HOST', default='smtp.example.com')
-EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
+EMAIL_PORT = config('EMAIL_PORT', default='587', cast=lambda v: int(v) if v else 587)
 EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 EMAIL_USE_TLS = True
