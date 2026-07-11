@@ -1,0 +1,5 @@
+#!/bin/bash
+set -e
+systemctl stop astra-monitor.service || true
+systemctl disable astra-monitor.service || true
+exit 0

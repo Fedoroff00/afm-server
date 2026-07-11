@@ -1,0 +1,13 @@
+Package: astra-monitor-agent
+Version: 1.0.0
+Section: admin
+Priority: optional
+Architecture: all
+Recommends: python3, python3-requests, python3-yaml, recoll
+Maintainer: AFM Team <admin@afm.local>
+Homepage: https://afm.local
+Description: Astra File Monitor Agent
+ Агент для централизованного мониторинга файлов и поиска
+ конфиденциальных данных. Индексирует /home с помощью Recoll,
+ отправляет метаданные и тексты на сервер AFM, отслеживает
+ появление триггерных слов и уведомляет об инцидентах.

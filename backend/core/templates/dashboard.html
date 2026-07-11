@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+{% block title %}Панель инструментов{% endblock %}
+{% block content %}
+<h1 style="margin-bottom: 1.5rem;">Панель инструментов</h1>
+
+<!-- Карточки быстрой статистики -->
+<div class="stat-grid">
+    <div class="stat-card">
+        <div class="stat-icon" style="background: rgba(45,212,191,0.15);">
+            <i class="fas fa-desktop" style="color: #2dd4bf;"></i>
+        </div>
+        <div class="stat-content">
+            <div class="stat-label">Агенты онлайн</div>
+            <div class="stat-value">{{ agents_online }} <span style="font-size:0.8rem; color: var(--muted-color);">/ {{ agents_total }}</span></div>
+            <div class="stat-trend positive">+{{ agents_new_24h }} за 24ч</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background: rgba(74,222,128,0.15);">
+            <i class="fas fa-file-alt" style="color: #4ade80;"></i>
+        </div>
+        <div class="stat-content">
+            <div class="stat-label">Всего файлов</div>
+            <div class="stat-value">{{ total_files }}</div>
+            <div class="stat-trend positive">+{{ files_24h }} за 24ч</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background: rgba(248,113,113,0.15);">
+            <i class="fas fa-exclamation-triangle" style="color: #f87171;"></i>
+        </div>
+        <div class="stat-content">
+            <div class="stat-label">Новые инциденты</div>
+            <div class="stat-value" style="color: var(--danger);">{{ new_incidents }}</div>
+            <div class="stat-trend critical">+{{ incidents_24h }} за 24ч</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background: rgba(250,204,21,0.15);">
+            <i class="fas fa-clock" style="color: #facc15;"></i>
+        </div>
+        <div class="stat-content">
+            <div class="stat-label">Последняя проверка</div>
+            <div class="stat-value" style="font-size: 1.1rem;">{{ last_heartbeat|default:"—" }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Кольцевой прогресс онлайна -->
+<div class="card" style="margin-bottom: 1.5rem;">
+    <div style="display: flex; align-items: center; gap: 2rem;">
+        <div id="onlineGauge" style="width: 180px; height: 180px;"></div>
+        <div>
+            <h2 style="margin:0 0 1rem 0;"><i class="fas fa-wifi"></i> Доступность агентов</h2>
+            <div style="display: flex; gap: 2rem; color: var(--text-color);">
+                <div><span style="display: inline-block; width: 12px; height: 12px; background: #4ade80; border-radius: 50%; margin-right: 0.5rem;"></span>Онлайн: <strong>{{ agents_online }}</strong></div>
+                <div><span style="display: inline-block; width: 12px; height: 12px; background: #f87171; border-radius: 50%; margin-right: 0.5rem;"></span>Офлайн: <strong>{{ agents_offline }}</strong></div>
+                <div><span style="display: inline-block; width: 12px; height: 12px; background: #94a3b8; border-radius: 50%; margin-right: 0.5rem;"></span>Всего: <strong>{{ agents_total }}</strong></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Первый ряд графиков -->
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+    <div class="card">
+        <h2><i class="fas fa-chart-line"></i> Инциденты за 7 дней</h2>
+        <div id="incidentsLineChart"></div>
+    </div>
+    <div class="card">
+        <h2><i class="fas fa-file-upload"></i> Новые файлы за 7 дней</h2>
+        <div id="filesColumnChart"></div>
+    </div>
+</div>
+
+<!-- Второй ряд графиков -->
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+    <div class="card">
+        <h2><i class="fas fa-tags"></i> Инциденты по триггерам</h2>
+        <div id="incidentsByTriggerPie"></div>
+    </div>
+    <div class="card">
+        <h2><i class="fas fa-file-alt"></i> Типы файлов (по расширениям)</h2>
+        <div id="fileTypesPie"></div>
+    </div>
+</div>
+
+<!-- Быстрые действия -->
+<div class="card">
+    <h2>Быстрые действия</h2>
+    <div style="display: flex; gap: 1rem;">
+        <a href="/machines/add/" class="btn btn-primary"><i class="fas fa-plus"></i> Добавить агента</a>
+        <a href="/incidents/" class="btn btn-outline"><i class="fas fa-list"></i> Все инциденты</a>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/apexcharts@3.44.0/dist/apexcharts.min.js"></script>
+<script>
+// Данные из сервера
+var incidentCounts = {{ incident_counts|safe }};
+var incidentDays = {{ incident_days|safe }};
+var fileCounts = {{ file_counts|safe }};
+var fileDays = {{ file_days|safe }};
+var triggerLabels = {{ trigger_labels|safe }};
+var triggerData = {{ trigger_data|safe }};
+var fileTypeLabels = {{ file_type_labels|safe }};
+var fileTypeData = {{ file_type_data|safe }};
+var onlinePercent = {{ online_percent }};
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Кольцевой прогресс
+    new ApexCharts(document.querySelector("#onlineGauge"), {
+        chart: { type: 'radialBar', height: 180, sparkline: { enabled: true } },
+        series: [onlinePercent],
+        plotOptions: {
+            radialBar: {
+                startAngle: -90, endAngle: 90,
+                hollow: { size: '70%' },
+                track: { background: '#1e293b', strokeWidth: '100%' },
+                dataLabels: {
+                    name: { show: false },
+                    value: { fontSize: '26px', fontWeight: 'bold', color: '#4ade80', offsetY: -5 }
+                }
+            }
+        },
+        fill: {
+            type: 'gradient',
+            gradient: {
+                shade: 'dark', type: 'horizontal',
+                shadeIntensity: 0.5,
+                gradientToColors: ['#22c55e'],
+                inverseColors: false, opacityFrom: 1, opacityTo: 1, stops: [0, 100]
+            }
+        },
+        stroke: { lineCap: 'round' }
+    }).render();
+
+    // Инциденты за 7 дней
+    new ApexCharts(document.querySelector("#incidentsLineChart"), {
+        chart: { type: 'area', height: 250, toolbar: { show: false } },
+        series: [{ name: 'Инциденты', data: incidentCounts }],
+        xaxis: { categories: incidentDays, labels: { style: { colors: '#94a3b8' } }, axisBorder: { show: false } },
+        yaxis: { labels: { style: { colors: '#94a3b8' } }, min: 0 },
+        dataLabels: { enabled: false },
+        stroke: { curve: 'smooth', width: 2 },
+        fill: { type: 'gradient', gradient: { shade: 'dark', type: 'vertical', gradientToColors: ['#facc15'], stops: [0, 100] } },
+        markers: { size: 4, colors: ['#facc15'], strokeColors: '#fff', strokeWidth: 2 },
+        tooltip: { theme: 'dark' },
+        grid: { borderColor: '#2d3748' }
+    }).render();
+
+    // Новые файлы за 7 дней
+    new ApexCharts(document.querySelector("#filesColumnChart"), {
+        chart: { type: 'bar', height: 250, toolbar: { show: false } },
+        series: [{ name: 'Файлы', data: fileCounts }],
+        xaxis: { categories: fileDays, labels: { style: { colors: '#94a3b8' } } },
+        yaxis: { labels: { style: { colors: '#94a3b8' } }, min: 0 },
+        plotOptions: { bar: { borderRadius: 4, columnWidth: '40%' } },
+        dataLabels: { enabled: false },
+        colors: ['#2dd4bf'],
+        tooltip: { theme: 'dark' },
+        grid: { borderColor: '#2d3748' }
+    }).render();
+
+    // Инциденты по триггерам
+    if (triggerLabels.length > 0) {
+        new ApexCharts(document.querySelector("#incidentsByTriggerPie"), {
+            chart: { type: 'donut', height: 250 },
+            series: triggerData,
+            labels: triggerLabels,
+            colors: ['#f87171', '#fbbf24', '#34d399', '#60a5fa', '#a78bfa'],
+            tooltip: { theme: 'dark' },
+            legend: { labels: { colors: '#94a3b8' } },
+            dataLabels: { style: { colors: ['#fff'] } }
+        }).render();
+    } else {
+        document.querySelector("#incidentsByTriggerPie").innerHTML = '<p style="color: var(--muted-color);">Нет данных.</p>';
+    }
+
+    // Типы файлов
+    if (fileTypeLabels.length > 0) {
+        new ApexCharts(document.querySelector("#fileTypesPie"), {
+            chart: { type: 'donut', height: 250 },
+            series: fileTypeData,
+            labels: fileTypeLabels,
+            colors: ['#60a5fa', '#facc15', '#4ade80', '#f87171', '#c084fc', '#fb923c', '#2dd4bf'],
+            tooltip: { theme: 'dark' },
+            legend: { labels: { colors: '#94a3b8' } }
+        }).render();
+    } else {
+        document.querySelector("#fileTypesPie").innerHTML = '<p style="color: var(--muted-color);">Нет данных.</p>';
+    }
+});
+</script>
+{% endblock %}

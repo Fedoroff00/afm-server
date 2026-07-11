@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}Машины{% endblock %}
+{% block content %}
+<h1 style="margin-bottom: 1.5rem;">Управление машинами</h1>
+
+<div class="stat-grid" style="margin-bottom: 1.5rem;">
+    <div class="stat-card">
+        <div class="stat-icon" style="background: rgba(96,165,250,0.15);">
+            <i class="fas fa-server" style="color: #60a5fa;"></i>
+        </div>
+        <div class="stat-content">
+            <div class="stat-label">Всего агентов</div>
+            <div class="stat-value">{{ total }}</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background: rgba(74,222,128,0.15);">
+            <i class="fas fa-check-circle" style="color: #4ade80;"></i>
+        </div>
+        <div class="stat-content">
+            <div class="stat-label">Онлайн</div>
+            <div class="stat-value">{{ online }}</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background: rgba(248,113,113,0.15);">
+            <i class="fas fa-exclamation-circle" style="color: #f87171;"></i>
+        </div>
+        <div class="stat-content">
+            <div class="stat-label">Офлайн</div>
+            <div class="stat-value">{{ offline }}</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <a href="/machines/add/" class="btn btn-primary" style="margin:auto;">
+            <i class="fas fa-plus"></i> Добавить агента
+        </a>
+    </div>
+</div>
+
+<form method="post" action="{% url 'agents_mass_action' %}">
+    {% csrf_token %}
+    <div class="card">
+        <div style="margin-bottom: 1rem; display: flex; gap: 1rem;">
+            <button type="submit" name="action" value="restart" class="btn btn-outline"><i class="fas fa-redo-alt"></i> Перезапустить выбранных</button>
+            <button type="submit" name="action" value="update" class="btn btn-outline"><i class="fas fa-cloud-download-alt"></i> Обновить выбранных</button>
+        </div>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th><input type="checkbox" id="select-all"></th>
+                    <th>Хостнейм</th>
+                    <th>IP-адрес</th>
+                    <th>Версия</th>
+                    <th>Статус</th>
+                    <th>Файлов</th>
+                    <th>Последняя связь</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for agent in agents %}
+                <tr>
+                    <td><input type="checkbox" name="agent_ids" value="{{ agent.id }}"></td>
+                    <td><strong>{{ agent.hostname }}</strong></td>
+                    <td>{{ agent.ip_address|default:"—" }}</td>
+                    <td>{{ agent.version }}</td>
+                    <td>
+                        {% if agent.is_online %}
+                        <span class="badge badge-success"><i class="fas fa-circle"></i> Онлайн</span>
+                        {% else %}
+                        <span class="badge badge-danger"><i class="fas fa-circle"></i> Офлайн</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ agent.total_files }}</td>
+                    <td>{{ agent.last_heartbeat|date:"d.m.Y H:i"|default:"никогда" }}</td>
+                    <td>
+                        <div class="action-btns">
+                            <a href="{% url 'agent_detail' agent.id %}" class="btn btn-outline btn-sm" title="Подробнее">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="/search/?agent_id={{ agent.id }}" class="btn btn-outline btn-sm" title="Файлы">
+                                <i class="fas fa-file-alt"></i>
+                            </a>
+                            <a href="{% url 'agent_restart' agent.id %}" class="btn btn-outline btn-sm" title="Перезапустить">
+                                <i class="fas fa-redo-alt"></i>
+                            </a>
+                            <a href="{% url 'agent_update' agent.id %}" class="btn btn-outline btn-sm" title="Обновить">
+                                <i class="fas fa-cloud-download-alt"></i>
+                            </a>
+                            <a href="{% url 'agent_delete' agent.id %}" class="btn btn-outline btn-sm btn-danger" title="Удалить" onclick="return confirm('Удалить агента {{ agent.hostname }}?')">
+                                <i class="fas fa-trash-alt"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</form>
+
+<script>
+document.getElementById('select-all').addEventListener('change', function() {
+    var checkboxes = document.querySelectorAll('input[name="agent_ids"]');
+    checkboxes.forEach(cb => cb.checked = this.checked);
+});
+</script>
+{% endblock %}

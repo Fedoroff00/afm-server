@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Инциденты безопасности{% endblock %}
+{% block content %}
+<h1 style="margin-bottom: 1.5rem;">Инциденты безопасности <span id="incident-count" class="badge badge-danger">{{ incidents|length }}</span></h1>
+
+<div class="card" id="incidents-table-container">
+    {% if incidents %}
+    <table>
+        <thead>
+            <tr><th>Дата</th><th>Агент</th><th>Файл</th><th>Слово-триггер</th><th>Статус</th><th>Действия</th></tr>
+        </thead>
+        <tbody id="incidents-body">
+            {% for inc in incidents %}
+            <tr>
+                <td>{{ inc.detected_at|date:"d.m.Y H:i" }}</td>
+                <td>{{ inc.agent.hostname }}</td>
+                <td>
+                    <span title="{{ inc.file_path }}">{{ inc.file_name }}</span>
+                    <br><small style="color: var(--muted-color);">Контекст: {{ inc.context|truncatechars:80 }}</small>
+                </td>
+                <td><span class="badge badge-warning">{{ inc.trigger_word.word|default:"—" }}</span></td>
+                <td>
+                    {% if inc.status == 'new' %}
+                    <span class="badge badge-danger">Новый</span>
+                    {% elif inc.status == 'ack' %}
+                    <span class="badge badge-warning">В работе</span>
+                    {% else %}
+                    <span class="badge badge-success">Решён</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="action-btns">
+                        {% if inc.status == 'new' %}
+                        <a href="{% url 'incident_mark' inc.id 'ack' %}" class="btn btn-outline btn-sm" title="Подтвердить">
+                            <i class="fas fa-check"></i>
+                        </a>
+                        <a href="{% url 'incident_mark' inc.id 'resolved' %}" class="btn btn-outline btn-sm" title="Решить">
+                            <i class="fas fa-check-double"></i>
+                        </a>
+                        {% elif inc.status == 'ack' %}
+                        <a href="{% url 'incident_mark' inc.id 'resolved' %}" class="btn btn-outline btn-sm" title="Завершить">
+                            <i class="fas fa-check-double"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="color: var(--muted-color);">Инцидентов не обнаружено.</p>
+    {% endif %}
+</div>
+
+<script>
+setInterval(function() {
+    fetch(window.location.href)
+        .then(response => response.text())
+        .then(html => {
+            var parser = new DOMParser();
+            var doc = parser.parseFromString(html, 'text/html');
+            var newTableBody = doc.getElementById('incidents-body');
+            var newCount = doc.getElementById('incident-count');
+            if (newTableBody) {
+                document.getElementById('incidents-body').innerHTML = newTableBody.innerHTML;
+                if (newCount) document.getElementById('incident-count').textContent = newCount.textContent;
+            }
+        });
+}, 30000);
+</script>
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Агент создан{% endblock %}
+{% block content %}
+<h1 style="margin-bottom: 1.5rem;">Агент успешно добавлен</h1>
+<div class="card">
+    <div class="form-group">
+        <label>Хостнейм</label>
+        <div class="form-control" style="background: transparent;">{{ agent.hostname }}</div>
+    </div>
+    <div class="form-group">
+        <label>IP-адрес</label>
+        <div class="form-control" style="background: transparent;">{{ agent.ip_address|default:"не указан" }}</div>
+    </div>
+    <div class="form-group">
+        <label>Токен доступа (скопируйте сейчас, больше не покажется)</label>
+        <div class="token-box">{{ created_token }}</div>
+    </div>
+    <div style="margin-top: 1.5rem;">
+        <p style="color: var(--muted-color);">Быстрая установка агента одной командой:</p>
+        <div style="background: #0d0e12; padding: 1rem; border-radius: 8px; color: #ccc; font-family: monospace;">
+            wget http://192.168.0.180/media/packages/astra-monitor-agent_latest_all.deb && \
+            echo 'astra-monitor astra-monitor/server_url string http://192.168.0.180' | sudo debconf-set-selections && \
+            echo 'astra-monitor astra-monitor/token string {{ created_token }}' | sudo debconf-set-selections && \
+            sudo dpkg -i astra-monitor-agent_latest_all.deb
+        </div>
+        <p style="color: var(--muted-color); margin-top: 1rem;">Или скачайте <a href="{% url 'download_agent' %}" style="color: var(--primary);">deb-пакет</a> и установите вручную.</p>
+    </div>
+    <a href="/machines/" class="btn btn-outline" style="margin-top: 1rem;"><i class="fas fa-arrow-left"></i> К списку машин</a>
+</div>
+{% endblock %}

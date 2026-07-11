@@ -1,0 +1,39 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход — {{ site_settings.site_title }}</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body class="login-page">
+    <div class="login-card">
+        <div style="text-align: center; margin-bottom: 2rem;">
+            {% if site_settings.logo %}
+                <img src="{{ site_settings.logo.url }}" alt="Logo" style="height: 80px; margin-bottom: 1rem;">
+            {% else %}
+                <i class="fas fa-shield" style="font-size: 4rem; color: var(--primary); margin-bottom: 1rem;"></i>
+            {% endif %}
+            <h2><i class="fas fa-lock"></i> Вход в систему</h2>
+        </div>
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="id_username">Логин</label>
+                <input type="text" name="username" id="id_username" class="form-control" required autofocus>
+            </div>
+            <div class="form-group">
+                <label for="id_password">Пароль</label>
+                <input type="password" name="password" id="id_password" class="form-control" required>
+            </div>
+            {% if form.errors %}
+            <div style="color: var(--danger); margin-bottom: 1rem; font-size: 0.9rem;">Неверный логин или пароль</div>
+            {% endif %}
+            <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">
+                <i class="fas fa-arrow-right-to-bracket"></i> Войти
+            </button>
+        </form>
+    </div>
+</body>
+</html>

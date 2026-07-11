@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Просмотр файла{% endblock %}
+{% block content %}
+<h1 style="margin-bottom: 1rem;">{{ file.file_name }}</h1>
+<div class="card">
+    <p><strong>Путь:</strong> {{ file.file_path }}</p>
+    <p><strong>Агент:</strong> {{ file.agent.hostname }} ({{ file.agent.ip_address }})</p>
+    <p><strong>Размер:</strong> {{ file.file_size|filesizeformat }}</p>
+    <p><strong>Изменён:</strong> {{ file.file_mtime|date:"d.m.Y H:i" }}</p>
+    <a href="{% url 'search' %}?q={{ file.file_name }}" class="btn btn-outline"><i class="fas fa-search"></i> К поиску</a>
+</div>
+<div class="card">
+    <h2>Содержимое</h2>
+    <div style="max-height: 600px; overflow-y: auto; background: #0d0e12; padding: 1rem; border-radius: 8px; color: #dce7f2; font-family: 'Fira Code', monospace; font-size: 0.9rem; white-space: pre-wrap; word-wrap: break-word;">
+        {{ file.content_text|linebreaksbr }}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,64 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ site_settings.site_title }}{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="logo">
+            {% if site_settings.logo %}
+                <img src="{{ site_settings.logo.url }}" alt="Logo">
+            {% else %}
+                <i class="fas fa-shield" style="font-size: 1.8rem; color: var(--primary);"></i>
+            {% endif %}
+            <span>{{ site_settings.site_title }}</span>
+        </div>
+        <nav>
+            <a href="/" class="{% if request.path == '/' %}active{% endif %}">
+                <i class="fas fa-tachometer-alt"></i> Панель
+            </a>
+            <a href="/machines/" class="{% if '/machines' in request.path %}active{% endif %}">
+                <i class="fas fa-desktop"></i> Машины
+            </a>
+            <a href="/search/" class="{% if request.path == '/search/' %}active{% endif %}">
+                <i class="fas fa-search"></i> Поиск
+            </a>
+            <a href="/incidents/" class="{% if request.path == '/incidents/' %}active{% endif %}">
+                <i class="fas fa-exclamation-triangle"></i> Инциденты
+            </a>
+            <a href="/download-agent/" class="{% if request.path == '/download-agent/' %}active{% endif %}">
+                <i class="fas fa-download"></i> Скачать агент
+            </a>
+            <a href="/settings/" class="{% if request.path == '/settings/' %}active{% endif %}">
+                <i class="fas fa-cog"></i> Настройки
+            </a>
+            {% if user.is_staff %}
+            <a href="/admin/" target="_blank">
+                <i class="fas fa-crown"></i> Админ-панель
+            </a>
+            {% endif %}
+        </nav>
+        <a href="/logout/" class="logout"><i class="fas fa-sign-out-alt"></i> Выход</a>
+    </aside>
+    <main class="main">
+        {% if messages %}
+        <div style="margin-bottom: 1.5rem;">
+            {% for message in messages %}
+            <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-success{% endif %}" 
+                 style="padding: 1rem; border-radius: 12px; margin-bottom: 0.5rem;
+                        {% if message.tags == 'error' %}background: rgba(248,113,113,0.2); color: #fca5a5;{% else %}background: rgba(74,222,128,0.2); color: #86efac;{% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

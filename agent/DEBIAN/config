@@ -1,0 +1,14 @@
+#!/bin/bash
+set -e
+. /usr/share/debconf/confmodule
+
+db_version 2.0
+
+# Если параметры уже установлены (напр. через preseeding), не спрашиваем
+if ! db_get astra-monitor/server_url || [ -z "$RET" ]; then
+    db_input high astra-monitor/server_url || true
+fi
+if ! db_get astra-monitor/token || [ -z "$RET" ]; then
+    db_input high astra-monitor/token || true
+fi
+db_go || true

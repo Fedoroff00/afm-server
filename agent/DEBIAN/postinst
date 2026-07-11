@@ -1,0 +1,37 @@
+#!/bin/bash
+set -e
+
+# Копируем systemd unit (он лежит в /opt/astra-monitor/ внутри пакета)
+if [ -f /opt/astra-monitor/astra-monitor.service ]; then
+    cp /opt/astra-monitor/astra-monitor.service /etc/systemd/system/astra-monitor.service
+    systemctl daemon-reload
+    systemctl enable astra-monitor.service || true
+fi
+
+# Проверяем наличие python3 (необязательно, но дадим подсказку)
+if ! command -v python3 &> /dev/null; then
+    echo "WARNING: python3 не найден. Агент не запустится."
+    echo "Установите python3, python3-requests, python3-yaml."
+    exit 0
+fi
+
+# Создаём виртуальное окружение, если его ещё нет
+if [ ! -d /opt/astra-monitor/venv ]; then
+    python3 -m venv /opt/astra-monitor/venv
+    /opt/astra-monitor/venv/bin/pip install requests pyyaml
+fi
+
+# Если конфиг не был создан при установке (из-за ошибки debconf), создадим шаблон
+if [ ! -f /etc/astra-monitor/config.yaml ]; then
+    mkdir -p /etc/astra-monitor
+    cat > /etc/astra-monitor/config.yaml << 'EOF'
+server_url: "http://192.168.0.180"
+token: "REPLACE_ME"
+EOF
+    chmod 640 /etc/astra-monitor/config.yaml
+fi
+
+# Запускаем сервис (если python3 есть)
+systemctl start astra-monitor.service || echo "Не удалось запустить агента (возможно, не настроен токен)."
+
+exit 0

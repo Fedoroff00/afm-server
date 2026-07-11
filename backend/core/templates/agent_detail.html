@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}{{ agent.hostname }} — Детали агента{% endblock %}
+{% block content %}
+<h1 style="margin-bottom: 1.5rem;">Агент: {{ agent.hostname }}</h1>
+
+<div class="card">
+    <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 2rem;">
+        <div>
+            <p><strong>Хостнейм:</strong> {{ agent.hostname }}</p>
+            <p><strong>IP-адрес:</strong> {{ agent.ip_address|default:"не указан" }}</p>
+            <p><strong>Версия:</strong> {{ agent.version }}</p>
+            <p><strong>Статус:</strong>
+                {% if agent.is_online %}
+                <span class="badge badge-success">Онлайн</span>
+                {% else %}
+                <span class="badge badge-danger">Офлайн</span>
+                {% endif %}
+            </p>
+            <p><strong>Последняя связь:</strong> {{ agent.last_heartbeat|date:"d.m.Y H:i"|default:"никогда" }}</p>
+            <p><strong>Всего файлов:</strong> {{ agent.total_files }}</p>
+            <p><strong>Создан:</strong> {{ agent.created_at|date:"d.m.Y H:i" }}</p>
+        </div>
+        <div>
+            <div class="action-btns">
+                <a href="{% url 'agent_regenerate_token' agent.id %}" class="btn btn-primary" onclick="return confirm('Перевыпустить токен?')">
+                    <i class="fas fa-key"></i> Новый токен
+                </a>
+                <a href="{% url 'agent_request_full_index' agent.id %}" class="btn btn-outline">
+                    <i class="fas fa-sync-alt"></i> Полная индексация
+                </a>
+                <a href="{% url 'agent_delete' agent.id %}" class="btn btn-danger" onclick="return confirm('Удалить агента?')">
+                    <i class="fas fa-trash-alt"></i> Удалить
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <h2><i class="fas fa-chart-line"></i> Активность (heartbeat) за 7 дней</h2>
+    <div id="heartbeatChart"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/apexcharts@3.44.0/dist/apexcharts.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var days = {{ days_json|safe }};
+    var counts = {{ hb_counts_json|safe }};
+    new ApexCharts(document.querySelector("#heartbeatChart"), {
+        chart: { type: 'bar', height: 250, toolbar: { show: false } },
+        series: [{ name: 'Heartbeat', data: counts }],
+        xaxis: { categories: days, labels: { style: { colors: '#94a3b8' } } },
+        yaxis: { labels: { style: { colors: '#94a3b8' } }, min: 0, max: 288 },
+        plotOptions: { bar: { borderRadius: 4 } },
+        colors: ['#60a5fa'],
+        tooltip: { theme: 'dark' },
+        grid: { borderColor: '#2d3748' }
+    }).render();
+});
+</script>
+{% endblock %}
+
+<div class="card" style="margin-top: 1.5rem;">
+    <h2><i class="fas fa-file-alt"></i> Последние файлы</h2>
+    {% with agent.files.all|slice:":5" as last_files %}
+    {% if last_files %}
+    <table>
+        <thead><tr><th>Имя</th><th>Путь</th><th>Размер</th><th>Дата</th><th></th></tr></thead>
+        <tbody>
+        {% for f in last_files %}
+        <tr>
+            <td>{{ f.file_name }}</td>
+            <td style="font-size:0.9em;">{{ f.file_path|truncatechars:60 }}</td>
+            <td>{{ f.file_size|filesizeformat }}</td>
+            <td>{{ f.file_mtime|date:"d.m.Y H:i" }}</td>
+            <td><a href="{% url 'file_view' f.id %}" class="btn btn-outline btn-sm"><i class="fas fa-eye"></i></a></td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="color: var(--muted-color);">Нет загруженных файлов.</p>
+    {% endif %}
+    {% endwith %}
+</div>

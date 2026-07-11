@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Поиск файлов{% endblock %}
+{% block content %}
+<h1 style="margin-bottom: 1.5rem;">Поиск по содержимому файлов</h1>
+
+<div class="card">
+    <form method="get" action="/search/">
+        <!-- Основная строка поиска -->
+        <div style="display: flex; gap: 1rem; align-items: center;">
+            <input type="text" name="q" class="form-control" placeholder='Введите запрос (можно "точную фразу")' value="{{ query }}" style="flex:2;">
+            <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> Найти</button>
+            <a href="/search/" class="btn btn-outline"><i class="fas fa-times"></i> Сброс</a>
+        </div>
+
+        <!-- Раскрывающиеся фильтры -->
+        <details style="margin-top: 1.2rem;">
+            <summary style="cursor: pointer; color: var(--primary); font-weight: 500;">
+                <i class="fas fa-filter"></i> Расширенные фильтры
+            </summary>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                <div>
+                    <label style="font-size:0.85rem;">Машина</label>
+                    <select name="agent" class="form-control" multiple size="3">
+                        {% for agent in agents %}
+                        <option value="{{ agent.id }}" {% if agent.id in selected_agents %}selected{% endif %}>{{ agent.hostname }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size:0.85rem;">Расширение</label>
+                    <input type="text" name="ext" class="form-control" placeholder="txt, odt" value="{{ ext_filter }}">
+                </div>
+                <div>
+                    <label style="font-size:0.85rem;">Размер от (КБ)</label>
+                    <input type="number" name="size_from" class="form-control" placeholder="10" value="{{ size_from }}">
+                </div>
+                <div>
+                    <label style="font-size:0.85rem;">Размер до (КБ)</label>
+                    <input type="number" name="size_to" class="form-control" placeholder="1000" value="{{ size_to }}">
+                </div>
+                <div>
+                    <label style="font-size:0.85rem;">Дата изм. от</label>
+                    <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
+                </div>
+                <div>
+                    <label style="font-size:0.85rem;">Дата изм. до</label>
+                    <input type="date" name="date_to" class="form-control" value="{{ date_to }}">
+                </div>
+            </div>
+        </details>
+    </form>
+</div>
+
+{% if query or selected_agents or ext_filter or size_from or size_to or date_from or date_to %}
+<div class="card">
+    <h2>Результаты ({{ results|length }})</h2>
+    {% if results %}
+    <table>
+        <thead><tr><th>Файл</th><th>Путь</th><th>Агент</th><th>Размер</th><th>Контекст</th><th></th></tr></thead>
+        <tbody>
+        {% for f in results %}
+        <tr>
+            <td><strong>{{ f.file_name }}</strong></td>
+            <td style="font-family: monospace; font-size:0.9em; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ f.file_path }}</td>
+            <td>{{ f.agent.hostname }}</td>
+            <td>{{ f.file_size|filesizeformat }}</td>
+            <td>
+                <div style="max-height: 60px; overflow: hidden; font-size:0.85em; color: #ccc;">
+                    {{ f.highlighted_context|safe }}
+                </div>
+            </td>
+            <td><a href="{% url 'file_view' f.id %}" class="btn btn-outline btn-sm"><i class="fas fa-eye"></i> Открыть</a></td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="color: var(--muted-color);">Ничего не найдено.</p>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

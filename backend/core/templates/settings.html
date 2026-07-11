@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Настройки{% endblock %}
+{% block content %}
+<h1 style="margin-bottom: 1.5rem;">Настройки системы</h1>
+
+<div class="card">
+    <h2><i class="fas fa-tags"></i> Управление ключевыми словами (триггерами)</h2>
+    <p style="color: var(--muted-color); margin-bottom: 1rem;">При обнаружении этих слов в файлах агенты немедленно создадут инцидент.</p>
+
+    <!-- Форма добавления -->
+    <form method="post" style="display: flex; gap: 1rem; margin-bottom: 2rem;">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="add">
+        <input type="text" name="word" class="form-control" placeholder="Введите слово (например: пароль)" style="flex:1;" required>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-plus"></i> Добавить</button>
+    </form>
+
+    <!-- Таблица слов -->
+    {% if triggers %}
+    <table>
+        <thead><tr><th>Слово</th><th>Статус</th><th>Действия</th></tr></thead>
+        <tbody>
+            {% for trig in triggers %}
+            <tr>
+                <td><strong>{{ trig.word }}</strong></td>
+                <td>
+                    {% if trig.is_active %}
+                    <span class="badge badge-success">Активно</span>
+                    {% else %}
+                    <span class="badge badge-warning">Отключено</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="action-btns">
+                        <form method="post" style="display: inline;">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="toggle">
+                            <input type="hidden" name="id" value="{{ trig.id }}">
+                            <button type="submit" class="btn btn-outline btn-sm" title="Включить/выключить">
+                                <i class="fas {% if trig.is_active %}fa-pause{% else %}fa-play{% endif %}"></i>
+                            </button>
+                        </form>
+                        <form method="post" style="display: inline;" onsubmit="return confirm('Удалить слово \'{{ trig.word }}\'?')">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="delete">
+                            <input type="hidden" name="id" value="{{ trig.id }}">
+                            <button type="submit" class="btn btn-outline btn-sm btn-danger" title="Удалить">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="color: var(--muted-color);">Нет добавленных слов-триггеров.</p>
+    {% endif %}
+</div>
+{% endblock %}

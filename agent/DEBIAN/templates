@@ -1,0 +1,12 @@
+Template: astra-monitor/server_url
+Type: string
+Default: https://192.168.0.180
+Description: URL сервера AFM:
+ Введите полный URL (с http:// или https://) сервера Astra File Monitor.
+Description-ru.UTF-8: URL сервера AFM
+
+Template: astra-monitor/token
+Type: string
+Description: Токен доступа агента:
+ Укажите токен, полученный от администратора AFM для данной машины.
+Description-ru.UTF-8: Токен доступа агента

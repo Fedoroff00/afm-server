@@ -1,0 +1,15 @@
+.env
+*.pyc
+__pycache__/
+staticfiles/
+media/
+db_data/
+redis_data/
+.env
+*.pyc
+__pycache__/
+staticfiles/
+media/
+db_data/
+redis_data/
+*.log
