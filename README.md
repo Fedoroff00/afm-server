@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://i.imgur.com/eDj5dDV.jpeg" alt="AFM Logo" width="120" />
+  <img src="https://i.imgur.com/PXHP1Lc.jpeg" alt="AFM Logo" width="120" />
 </p>
 
 <h1 align="center">🛡️ Astra File Monitor (AFM)</h1>
