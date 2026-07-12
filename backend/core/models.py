@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-from django.contrib.postgres.search import SearchVectorField, SearchVector
+from django.contrib.postgres.search import SearchVectorField
 from django.utils import timezone
 from datetime import timedelta
 import uuid
@@ -54,11 +54,6 @@ class FileRecord(models.Model):
             models.Index(fields=['agent', 'file_path']),
             models.Index(fields=['file_name']),
         ]
-
-    def save(self, *args, **kwargs):
-        if self.content_text:
-            self.search_vector = SearchVector('content_text', config='russian')
-        super().save(*args, **kwargs)
 
 class Incident(models.Model):
     STATUS_CHOICES = [

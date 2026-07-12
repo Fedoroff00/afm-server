@@ -70,16 +70,26 @@ def dashboard(request):
             messages.error(request, f'Ошибка получения данных: {e}')
 
     return render(request, 'dashboard.html', {
-        'agents_online': agents_online, 'agents_offline': agents_offline,
-        'agents_total': agents_total, 'online_percent': online_percent,
-        'total_files': total_files, 'new_incidents': new_incidents,
+        'agents_online': agents_online,
+        'agents_offline': agents_offline,
+        'agents_total': agents_total,
+        'online_percent': online_percent,
+        'total_files': total_files,
+        'new_incidents': new_incidents,
         'last_heartbeat': last_heartbeat,
-        'incident_days': json.dumps(days), 'incident_counts': json.dumps(incidents_counts),
-        'files_24h': files_24h, 'incidents_24h': incidents_24h, 'agents_new_24h': agents_new_24h,
-        'file_days': json.dumps(file_days), 'file_counts': json.dumps(file_counts),
-        'trigger_labels': json.dumps(trigger_labels), 'trigger_data': json.dumps(trigger_data),
-        'top_agent_names': json.dumps(top_agent_names), 'top_agent_files': json.dumps(top_agent_files),
-        'file_type_labels': json.dumps(file_type_labels), 'file_type_data': json.dumps(file_type_data),
+        'incident_days': json.dumps(days),
+        'incident_counts': json.dumps(incidents_counts),
+        'files_24h': files_24h,
+        'incidents_24h': incidents_24h,
+        'agents_new_24h': agents_new_24h,
+        'file_days': json.dumps(file_days),
+        'file_counts': json.dumps(file_counts),
+        'trigger_labels': json.dumps(trigger_labels),
+        'trigger_data': json.dumps(trigger_data),
+        'top_agent_names': json.dumps(top_agent_names),
+        'top_agent_files': json.dumps(top_agent_files),
+        'file_type_labels': json.dumps(file_type_labels),
+        'file_type_data': json.dumps(file_type_data),
     })
 
 @login_required

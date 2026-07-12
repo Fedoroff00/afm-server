@@ -6,7 +6,6 @@ from django.utils.dateparse import parse_datetime
 from core.models import FileRecord, Incident, TriggerWord, AgentConfig
 from .serializers import FileRecordSerializer
 from .auth import AgentTokenAuthentication
-from django.db.models import Q
 
 class HeartbeatView(APIView):
     authentication_classes = [AgentTokenAuthentication]
@@ -40,12 +39,9 @@ class HeartbeatView(APIView):
             'scan_interval_minutes': config.scan_interval_minutes,
             'enabled': config.enabled,
         }
-
-        # Динамический URL deb-пакета на основе хоста запроса
         host = request.get_host()
-        scheme = 'http'  # можно заменить на request.scheme, если используется HTTPS
+        scheme = 'http'
         download_url = f'{scheme}://{host}/media/packages/astra-monitor-agent_latest_all.deb'
-
         response_data = {
             'status': 'ok',
             'triggers': triggers,
@@ -94,12 +90,14 @@ class FileUploadView(APIView):
             if created:
                 created_count += 1
 
+            # Проверка триггеров сервером (без дублирования инцидентов)
             for word in triggers:
                 if word.lower() in content.lower():
+                    # Проверяем, нет ли уже ЛЮБОГО инцидента по этому файлу, агенту и слову
                     existing = Incident.objects.filter(
                         agent=agent,
                         file_path=file_path,
-                        status__in=['new', 'ack']
+                        trigger_word__word=word
                     ).exists()
                     if not existing:
                         Incident.objects.create(
@@ -111,7 +109,7 @@ class FileUploadView(APIView):
                             context=content[:200],
                             status='new'
                         )
-                    break
+                    break   # на файл достаточно одного инцидента (первое совпадение)
 
         agent.total_files = FileRecord.objects.filter(agent=agent).count()
         agent.save(update_fields=['total_files'])
