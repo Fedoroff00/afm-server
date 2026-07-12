@@ -1,9 +1,3 @@
-Вот готовый Markdown‑код для `README.md`. Скопируйте его полностью и вставьте в редактор файла на GitHub (нажмите на карандаш в правом верхнем углу страницы репозитория).
-
-<p align="center">
-  <img src="https://i.imgur.com/5yL5zYj.png" alt="AFM Logo" width="120" />
-</p>
-
 <h1 align="center">🛡️ Astra File Monitor (AFM)</h1>
 
 <p align="center">
