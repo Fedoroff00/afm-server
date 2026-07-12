@@ -69,6 +69,7 @@ echo 'astra-monitor astra-monitor/server_url string http://<IP-сервера>' 
 echo 'astra-monitor astra-monitor/token string ВАШ_ТОКЕН' | sudo debconf-set-selections && \
 sudo dpkg -i astra-monitor-agent_latest_all.deb
 ```
+```
 
 Агент установится, запустится и начнёт сканировать `/home`, отправляя результаты на сервер.
 
