@@ -11,3 +11,6 @@ gunicorn==22.0.0
 cryptography==42.0.5
 python-decouple==3.8
 requests==2.31.0
+django-axes==6.4.0
+reportlab==4.2.0
+flower==2.0.1

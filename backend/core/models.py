@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.contrib.auth.hashers import make_password, check_password
 from django.contrib.postgres.search import SearchVectorField
 from django.utils import timezone
 from datetime import timedelta
@@ -18,6 +19,15 @@ class Agent(models.Model):
     pending_update = models.BooleanField(default=False)
     last_restart = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        if self.token and not self.token.startswith('pbkdf2_sha256$'):
+            self.token = make_password(self.token)
+        super().save(*args, **kwargs)
+
+    def check_token(self, raw_token):
+        """Проверяет, соответствует ли переданный токен хранимому хешу."""
+        return check_password(raw_token, self.token)
 
     def is_online(self):
         if self.last_heartbeat is None:

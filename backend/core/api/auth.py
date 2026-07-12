@@ -6,11 +6,9 @@ class AgentTokenAuthentication(authentication.BaseAuthentication):
         auth_header = request.META.get('HTTP_AUTHORIZATION', '')
         if not auth_header.startswith('Token '):
             return None
-        token = auth_header.split(' ')[1]
-        try:
-            agent = Agent.objects.get(token=token, is_active=True)
-        except Agent.DoesNotExist:
-            raise exceptions.AuthenticationFailed('Неверный токен агента')
-        # Возвращаем (None, agent) – тогда request.user будет AnonymousUser,
-        # а request.auth – наш агент
-        return (None, agent)
+        raw_token = auth_header.split(' ')[1]
+        # Ищем агента, сравнивая токен через check_token (поддерживает хешированные токены)
+        for agent in Agent.objects.filter(is_active=True):
+            if agent.check_token(raw_token):
+                return (None, agent)
+        raise exceptions.AuthenticationFailed('Неверный токен агента')

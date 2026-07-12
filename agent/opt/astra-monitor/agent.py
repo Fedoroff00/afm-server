@@ -4,10 +4,7 @@ from datetime import datetime
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
 from urllib.parse import urljoin
-
-import requests
-import importlib
-import yaml
+import requests, yaml
 from logging.handlers import TimedRotatingFileHandler
 
 try:
@@ -117,7 +114,7 @@ class ServerUploader:
                 log.info(f"Sent {len(files_batch)} files.")
                 return len(files_batch)
             else:
-                log.error(f"Upload error: {resp.status_code} {resp.text}")
+                log.error(f"Upload error: {resp.status_code}")
                 return 0
         except Exception as e:
             log.error(f"Upload request failed: {e}")
@@ -139,7 +136,7 @@ class ServerUploader:
         try:
             resp = self.session.post(urljoin(self.server_url, '/api/agent/incident/'), json=incident_data)
             if resp.status_code == 201:
-                log.info(f"Incident reported: {incident_data.get('trigger_word')} in {incident_data.get('file_name')}")
+                log.info(f"Incident reported: {incident_data.get('trigger_word')}")
                 return True
             else:
                 log.error(f"Incident report failed: {resp.status_code}")
@@ -166,7 +163,6 @@ class Agent:
             log.warning("inotify not available, only periodic scan.")
         threading.Thread(target=self._batch_sender, daemon=True).start()
         threading.Thread(target=self._retry_worker, daemon=True).start()
-        self._load_plugins()
         if MONITOR_PORT > 0:
             threading.Thread(target=self._start_monitor, daemon=True).start()
 
@@ -242,11 +238,6 @@ class Agent:
                     'trigger_word': word
                 }
                 self.uploader.send_incident(incident)
-                for plugin in self.plugins:
-                    try:
-                        plugin.on_incident(incident)
-                    except:
-                        pass
                 break
 
     def _enqueue_retry(self, path, file_data):
@@ -261,36 +252,33 @@ class Agent:
 
     def _retry_worker(self):
         while self.running:
-            try:
-                now = time.time()
-                to_retry = []
-                with state_lock:
-                    for item in retry_queue_list[:]:
-                        if item['next_retry'] <= now:
-                            to_retry.append(item)
-                for item in to_retry:
-                    log.info(f"Retrying {item['path']} (attempt {item['attempt']+1})")
-                    success = self.uploader.send_files([item['payload']])
-                    if success:
+            now = time.time()
+            to_retry = []
+            with state_lock:
+                for item in retry_queue_list[:]:
+                    if item['next_retry'] <= now:
+                        to_retry.append(item)
+            for item in to_retry:
+                log.info(f"Retrying {item['path']} (attempt {item['attempt']+1})")
+                success = self.uploader.send_files([item['payload']])
+                if success:
+                    with state_lock:
+                        retry_queue_list.remove(item)
+                        if os.path.exists(item['path']):
+                            stat = os.stat(item['path'])
+                            known_files[item['path']] = (stat.st_mtime, stat.st_size)
+                        save_state()
+                else:
+                    item['attempt'] += 1
+                    if item['attempt'] >= MAX_RETRIES:
+                        log.error(f"Max retries reached for {item['path']}, giving up.")
                         with state_lock:
                             retry_queue_list.remove(item)
-                            if os.path.exists(item['path']):
-                                stat = os.stat(item['path'])
-                                known_files[item['path']] = (stat.st_mtime, stat.st_size)
                             save_state()
                     else:
-                        item['attempt'] += 1
-                        if item['attempt'] >= MAX_RETRIES:
-                            log.error(f"Max retries reached for {item['path']}, giving up.")
-                            with state_lock:
-                                retry_queue_list.remove(item)
-                                save_state()
-                        else:
-                            item['next_retry'] = now + RETRY_DELAY_BASE * (2 ** item['attempt'])
-                            with state_lock:
-                                save_state()
-            except Exception as e:
-                log.error(f"Retry worker error: {e}")
+                        item['next_retry'] = now + RETRY_DELAY_BASE * (2 ** item['attempt'])
+                        with state_lock:
+                            save_state()
             time.sleep(10)
 
     def _batch_sender(self):
@@ -344,23 +332,6 @@ class Agent:
                     if cached and cached[0] == stat.st_mtime and cached[1] == stat.st_size:
                         continue
                     self.event_queue.put(('new', full_path))
-
-
-    def _load_plugins(self):
-        self.plugins = []
-        plugins_dir = "/opt/astra-monitor/plugins"
-        if not os.path.isdir(plugins_dir):
-            return
-        sys.path.insert(0, plugins_dir)
-        for filename in os.listdir(plugins_dir):
-            if filename.endswith('.py') and not filename.startswith('_'):
-                modname = filename[:-3]
-                try:
-                    mod = importlib.import_module(modname)
-                    self.plugins.append(mod)
-                    log.info(f"Plugin loaded: {modname}")
-                except Exception as e:
-                    log.error(f"Failed to load plugin {modname}: {e}")
 
     def heartbeat_loop(self):
         last_full_scan = 0
@@ -422,12 +393,12 @@ class Agent:
                 elif self.path.startswith('/file?'):
                     import urllib.parse
                     params = urllib.parse.parse_qs(self.path.split('?', 1)[1])
-                    path = params.get('path', [None])[0]
-                    if path and os.path.isfile(path):
+                    filepath = params.get('path', [None])[0]
+                    if filepath and os.path.isfile(filepath):
                         self.send_response(200)
                         self.send_header('Content-type', 'application/octet-stream')
                         self.end_headers()
-                        with open(path, 'rb') as f:
+                        with open(filepath, 'rb') as f:
                             self.wfile.write(f.read())
                     else:
                         self.send_response(404)

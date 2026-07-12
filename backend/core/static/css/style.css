@@ -372,3 +372,16 @@ select[multiple] option {
 .btn-sm { padding: 0.3rem 0.6rem; font-size: 0.9rem; }
 .btn-danger { border-color: rgba(248,113,113,0.3); color: #f87171; }
 .btn-danger:hover { background: rgba(248,113,113,0.1); border-color: #f87171; }
+
+body.light-theme {
+  --bg-color: #f0f2f5;
+  --sidebar-bg: #ffffff;
+  --card-bg: #ffffff;
+  --text-color: #333;
+  --muted-color: #666;
+  --border-color: #ddd;
+  --input-bg: #f9f9f9;
+}
+body.light-theme .stat-card, body.light-theme .card { background: #fff; color: #333; }
+body.light-theme .sidebar nav a { color: #555; }
+body.light-theme .sidebar nav a:hover, body.light-theme .sidebar nav a.active { background: #e0f7fa; color: #00796b; }

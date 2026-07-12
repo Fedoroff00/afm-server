@@ -353,3 +353,54 @@ def download_agent(request):
         return FileResponse(open(file_path, 'rb'), as_attachment=True, filename='astra-monitor-agent_latest_all.deb')
     messages.error(request, 'Файл агента не найден.')
     return redirect('dashboard')
+
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+from datetime import datetime
+
+@login_required
+def export_pdf(request):
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="afm_report.pdf"'
+
+    now = timezone.now()
+    agents_total = Agent.objects.count()
+    agents_online = Agent.objects.filter(last_heartbeat__gte=now - timedelta(minutes=5)).count()
+    total_files = FileRecord.objects.count()
+    new_incidents = Incident.objects.filter(status='new').count()
+    incidents = Incident.objects.select_related('agent', 'trigger_word').all()[:30]
+
+    p = canvas.Canvas(response, pagesize=A4)
+    width, height = A4
+
+    p.setFont("Helvetica-Bold", 16)
+    p.drawString(30, height - 40, "Astra File Monitor - Отчёт")
+    p.setFont("Helvetica", 10)
+    p.drawString(30, height - 55, f"Дата: {now.strftime('%d.%m.%Y %H:%M')}")
+
+    p.drawString(30, height - 75, f"Агентов онлайн: {agents_online} из {agents_total}")
+    p.drawString(30, height - 85, f"Всего файлов: {total_files}")
+    p.drawString(30, height - 95, f"Новых инцидентов: {new_incidents}")
+
+    y = height - 115
+    p.setFont("Helvetica-Bold", 9)
+    p.drawString(30, y, "Дата")
+    p.drawString(110, y, "Агент")
+    p.drawString(190, y, "Файл")
+    p.drawString(300, y, "Триггер")
+    p.drawString(380, y, "Статус")
+    y -= 15
+    p.setFont("Helvetica", 8)
+    for inc in incidents:
+        if y < 50:
+            p.showPage()
+            y = height - 40
+        p.drawString(30, y, inc.detected_at.strftime('%d.%m.%Y %H:%M'))
+        p.drawString(110, y, inc.agent.hostname[:20])
+        p.drawString(190, y, inc.file_name[:25])
+        p.drawString(300, y, inc.trigger_word.word[:20] if inc.trigger_word else '—')
+        p.drawString(380, y, dict(Incident.STATUS_CHOICES).get(inc.status, '—'))
+        y -= 15
+
+    p.save()
+    return response

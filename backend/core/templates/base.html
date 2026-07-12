@@ -20,28 +20,14 @@
             <span>{{ site_settings.site_title }}</span>
         </div>
         <nav>
-            <a href="/" class="{% if request.path == '/' %}active{% endif %}">
-                <i class="fas fa-tachometer-alt"></i> Панель
-            </a>
-            <a href="/machines/" class="{% if '/machines' in request.path %}active{% endif %}">
-                <i class="fas fa-desktop"></i> Машины
-            </a>
-            <a href="/search/" class="{% if request.path == '/search/' %}active{% endif %}">
-                <i class="fas fa-search"></i> Поиск
-            </a>
-            <a href="/incidents/" class="{% if request.path == '/incidents/' %}active{% endif %}">
-                <i class="fas fa-exclamation-triangle"></i> Инциденты
-            </a>
-            <a href="/download-agent/" class="{% if request.path == '/download-agent/' %}active{% endif %}">
-                <i class="fas fa-download"></i> Скачать агент
-            </a>
-            <a href="/settings/" class="{% if request.path == '/settings/' %}active{% endif %}">
-                <i class="fas fa-cog"></i> Настройки
-            </a>
+            <a href="/" class="{% if request.path == '/' %}active{% endif %}"><i class="fas fa-tachometer-alt"></i> Панель</a>
+            <a href="/machines/" class="{% if '/machines' in request.path %}active{% endif %}"><i class="fas fa-desktop"></i> Машины</a>
+            <a href="/search/" class="{% if request.path == '/search/' %}active{% endif %}"><i class="fas fa-search"></i> Поиск</a>
+            <a href="/incidents/" class="{% if request.path == '/incidents/' %}active{% endif %}"><i class="fas fa-exclamation-triangle"></i> Инциденты</a>
+            <a href="/download-agent/" class="{% if request.path == '/download-agent/' %}active{% endif %}"><i class="fas fa-download"></i> Скачать агент</a>
+            <a href="/settings/" class="{% if request.path == '/settings/' %}active{% endif %}"><i class="fas fa-cog"></i> Настройки</a>
             {% if user.is_staff %}
-            <a href="/admin/" target="_blank">
-                <i class="fas fa-crown"></i> Админ-панель
-            </a>
+            <a href="/admin/" target="_blank"><i class="fas fa-crown"></i> Админ-панель</a>
             {% endif %}
         </nav>
         <a href="/logout/" class="logout"><i class="fas fa-sign-out-alt"></i> Выход</a>
@@ -50,15 +36,22 @@
         {% if messages %}
         <div style="margin-bottom: 1.5rem;">
             {% for message in messages %}
-            <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-success{% endif %}" 
-                 style="padding: 1rem; border-radius: 12px; margin-bottom: 0.5rem;
-                        {% if message.tags == 'error' %}background: rgba(248,113,113,0.2); color: #fca5a5;{% else %}background: rgba(74,222,128,0.2); color: #86efac;{% endif %}">
-                {{ message }}
-            </div>
+            <div class="alert" style="padding: 1rem; border-radius: 12px; margin-bottom: 0.5rem; {% if message.tags == 'error' %}background: rgba(248,113,113,0.2); color: #fca5a5;{% else %}background: rgba(74,222,128,0.2); color: #86efac;{% endif %}">{{ message }}</div>
             {% endfor %}
         </div>
         {% endif %}
         {% block content %}{% endblock %}
     </main>
+
+    <div class="theme-toggle" style="position: fixed; bottom: 20px; right: 20px; z-index: 1000;">
+        <button onclick="toggleTheme()" style="background: var(--primary); border: none; color: #fff; padding: 10px 15px; border-radius: 20px; cursor: pointer;">🌓 Тема</button>
+    </div>
+    <script>
+        function toggleTheme() {
+            document.body.classList.toggle('light-theme');
+            localStorage.setItem('theme', document.body.classList.contains('light-theme') ? 'light' : 'dark');
+        }
+        if (localStorage.getItem('theme') === 'light') document.body.classList.add('light-theme');
+    </script>
 </body>
 </html>

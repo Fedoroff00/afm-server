@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
 from core.views import (
+    export_pdf,
     dashboard, machine_list, search_view, incident_list, incident_mark,
     settings_view, add_agent, agent_created, agent_detail,
     agent_regenerate_token, agent_delete, agent_request_full_index,

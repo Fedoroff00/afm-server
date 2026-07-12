@@ -107,6 +107,17 @@ services:
       - web
     restart: unless-stopped
 
+  flower:
+    build: ./backend
+    command: celery -A afm flower --port=5555
+    ports:
+      - "5555:5555"
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+    depends_on:
+      - redis
+    restart: unless-stopped
+
 volumes:
   db_data:
   redis_data:
