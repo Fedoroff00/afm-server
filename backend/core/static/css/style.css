@@ -385,3 +385,65 @@ body.light-theme {
 body.light-theme .stat-card, body.light-theme .card { background: #fff; color: #333; }
 body.light-theme .sidebar nav a { color: #555; }
 body.light-theme .sidebar nav a:hover, body.light-theme .sidebar nav a.active { background: #e0f7fa; color: #00796b; }
+
+/* ========== ТАМАГОЧИ-СТАТУСЫ ========== */
+.agent-tamagotchi {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+    font-size: 0.9em;
+}
+.tamagotchi-icon { font-size: 1.2em; }
+.tamagotchi-icon-large { font-size: 2.5em; display: block; text-align: center; margin: 0.5rem 0; }
+.tamagotchi-text { color: var(--muted-color); }
+.mini-progress { width: 60px; height: 4px; background: #1e293b; border-radius: 2px; overflow: hidden; }
+.mini-progress-fill { height: 100%; background: #60a5fa; border-radius: 2px; transition: width 0.3s; }
+.progress-bar { width: 100%; height: 8px; background: #1e293b; border-radius: 4px; margin: 0.5rem 0; }
+.progress-bar .fill { height: 100%; background: #60a5fa; border-radius: 4px; transition: width 0.3s; }
+
+/* Анимация Zzz */
+.zzz-animation {
+    display: inline-block;
+    animation: floatZzz 2s infinite ease-in-out;
+    color: #a0aec0;
+    font-weight: bold;
+}
+@keyframes floatZzz {
+    0% { transform: translateY(0); opacity: 0; }
+    50% { opacity: 1; }
+    100% { transform: translateY(-10px); opacity: 0; }
+}
+
+/* Анимация стрелки отправки */
+.upload-arrow {
+    display: inline-block;
+    animation: flyUp 1s infinite;
+    color: #fbbf24;
+}
+@keyframes flyUp {
+    0% { transform: translateY(0); opacity: 1; }
+    100% { transform: translateY(-8px); opacity: 0; }
+}
+
+/* Мигание ошибки */
+.error-blink {
+    display: inline-block;
+    animation: blink 0.8s infinite;
+    color: #f87171;
+    font-weight: bold;
+}
+@keyframes blink {
+    50% { opacity: 0; }
+}
+
+/* Иконка сканирования (пульсация) */
+.tamagotchi-icon.scanning,
+.tamagotchi-icon-large.scanning {
+    animation: pulse 1.5s infinite;
+}
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}

@@ -62,7 +62,34 @@
                 {% for agent in agents %}
                 <tr>
                     <td><input type="checkbox" name="agent_ids" value="{{ agent.id }}"></td>
-                    <td><strong>{{ agent.hostname }}</strong></td>
+                    <td>
+                        <strong>{{ agent.hostname }}</strong>
+                        <!-- Виджет тамагочи -->
+                        <div class="agent-tamagotchi">
+                            {% if agent.status == 'idle' %}
+                                <span class="tamagotchi-icon idle">😴</span>
+                                <span class="tamagotchi-text">Спит</span>
+                                <span class="zzz-animation">Zzz</span>
+                            {% elif agent.status == 'scanning' %}
+                                <span class="tamagotchi-icon scanning">🔍</span>
+                                <span class="tamagotchi-text">Сканирует</span>
+                                <div class="mini-progress">
+                                    <div class="mini-progress-fill" style="width:{{ agent.scan_progress }}%"></div>
+                                </div>
+                            {% elif agent.status == 'uploading' %}
+                                <span class="tamagotchi-icon uploading">📤</span>
+                                <span class="tamagotchi-text">Отправляет</span>
+                                <span class="upload-arrow">↑</span>
+                            {% elif agent.status == 'error' %}
+                                <span class="tamagotchi-icon error">❌</span>
+                                <span class="tamagotchi-text">Ошибка</span>
+                                <span class="error-blink">!</span>
+                            {% else %}
+                                <span class="tamagotchi-icon idle">😴</span>
+                                <span class="tamagotchi-text">Спит</span>
+                            {% endif %}
+                        </div>
+                    </td>
                     <td>{{ agent.ip_address|default:"—" }}</td>
                     <td>{{ agent.version }}</td>
                     <td>

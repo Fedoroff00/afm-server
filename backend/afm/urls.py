@@ -2,12 +2,12 @@ from django.contrib import admin
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
 from core.views import (
-    export_pdf,
     dashboard, machine_list, search_view, incident_list, incident_mark,
     settings_view, add_agent, agent_created, agent_detail,
     agent_regenerate_token, agent_delete, agent_request_full_index,
     agent_restart, agent_update, agents_mass_action,
-    download_agent, file_view
+    download_agent, file_view, export_pdf,
+    agent_status_api
 )
 
 urlpatterns = [
@@ -28,8 +28,11 @@ urlpatterns = [
     path('download-agent/', download_agent, name='download_agent'),
     path('search/', search_view, name='search'),
     path('file/<int:file_id>/', file_view, name='file_view'),
+    path('export-pdf/', export_pdf, name='export_pdf'),
     path('incidents/', incident_list, name='incident_list'),
     path('incidents/<int:incident_id>/mark/<str:new_status>/', incident_mark, name='incident_mark'),
     path('settings/', settings_view, name='settings'),
+    path('api/agent-status/<int:agent_id>/', agent_status_api, name='agent_status_api'),
+    path('api/agent-status/<int:agent_id>/', agent_status_api, name='agent_status_api'),
     path('api/', include('core.api.urls')),
 ]

@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
-from core.models import FileRecord, Incident, TriggerWord, AgentConfig
+from core.models import FileRecord, Incident, TriggerWord, AgentConfig, HeartbeatLog
 from .serializers import FileRecordSerializer
 from .auth import AgentTokenAuthentication
 
@@ -16,6 +16,10 @@ class HeartbeatView(APIView):
         if not agent:
             return Response({'error': 'Unauthorized'}, status=401)
         agent.last_heartbeat = timezone.now()
+        agent.status = request.data.get('status', agent.status)
+        agent.scan_progress = request.data.get('scan_progress', agent.scan_progress)
+        agent.status_message = request.data.get('status_message', agent.status_message)[:100]
+        HeartbeatLog.objects.create(agent=agent)
         command = None
         if agent.pending_full_index:
             command = 'full_index'
@@ -90,10 +94,9 @@ class FileUploadView(APIView):
             if created:
                 created_count += 1
 
-            # Проверка триггеров сервером (без дублирования инцидентов)
+            # Проверка триггеров: ищем триггер как подстроку контента или наоборот
             for word in triggers:
-                if word.lower() in content.lower():
-                    # Проверяем, нет ли уже ЛЮБОГО инцидента по этому файлу, агенту и слову
+                if word.lower() in content.lower() or content.lower() in word.lower():
                     existing = Incident.objects.filter(
                         agent=agent,
                         file_path=file_path,
@@ -109,10 +112,13 @@ class FileUploadView(APIView):
                             context=content[:200],
                             status='new'
                         )
-                    break   # на файл достаточно одного инцидента (первое совпадение)
+                    break
 
         agent.total_files = FileRecord.objects.filter(agent=agent).count()
-        agent.save(update_fields=['total_files'])
+        if agent.status == 'uploading':
+            agent.status = 'idle'
+            agent.status_message = ''
+        agent.save(update_fields=['total_files', 'status', 'status_message'])
         return Response({'received': created_count}, status=status.HTTP_201_CREATED)
 
 class IncidentReportView(APIView):

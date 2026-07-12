@@ -105,10 +105,12 @@ def agent_detail(request, agent_id):
     agent = get_object_or_404(Agent, id=agent_id)
     days, hb_counts = [], []
     today = timezone.now().date()
+    from .models import HeartbeatLog
     for i in range(6, -1, -1):
         day = today - timedelta(days=i)
         days.append(day.strftime('%d.%m'))
-        hb_counts.append(0)
+        cnt = HeartbeatLog.objects.filter(agent=agent, timestamp__date=day).count()
+        hb_counts.append(cnt)
     return render(request, 'agent_detail.html', {'agent': agent, 'days_json': json.dumps(days), 'hb_counts_json': json.dumps(hb_counts)})
 
 @login_required
@@ -404,3 +406,14 @@ def export_pdf(request):
 
     p.save()
     return response
+
+from django.http import JsonResponse
+
+def agent_status_api(request, agent_id):
+    agent = get_object_or_404(Agent, id=agent_id)
+    return JsonResponse({
+        'status': agent.status,
+        'scan_progress': agent.scan_progress,
+        'status_message': agent.status_message,
+        'is_online': agent.is_online(),
+    })

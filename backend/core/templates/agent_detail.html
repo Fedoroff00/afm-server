@@ -16,6 +16,9 @@
                 <span class="badge badge-danger">Офлайн</span>
                 {% endif %}
             </p>
+            <div class="agent-tamagotchi-large" id="agent-tamagotchi">
+                <!-- Заполняется JS -->
+            </div>
             <p><strong>Последняя связь:</strong> {{ agent.last_heartbeat|date:"d.m.Y H:i"|default:"никогда" }}</p>
             <p><strong>Всего файлов:</strong> {{ agent.total_files }}</p>
             <p><strong>Создан:</strong> {{ agent.created_at|date:"d.m.Y H:i" }}</p>
@@ -27,6 +30,9 @@
                 </a>
                 <a href="{% url 'agent_request_full_index' agent.id %}" class="btn btn-outline">
                     <i class="fas fa-sync-alt"></i> Полная индексация
+                </a>
+                <a href="{% url 'agent_restart' agent.id %}" class="btn btn-outline">
+                    <i class="fas fa-redo-alt"></i> Перезапустить
                 </a>
                 <a href="{% url 'agent_delete' agent.id %}" class="btn btn-danger" onclick="return confirm('Удалить агента?')">
                     <i class="fas fa-trash-alt"></i> Удалить
@@ -56,30 +62,41 @@ document.addEventListener('DOMContentLoaded', function () {
         tooltip: { theme: 'dark' },
         grid: { borderColor: '#2d3748' }
     }).render();
+
+    // Функция обновления статуса тамагочи
+    function updateTamagotchi() {
+        fetch('/api/agent-status/{{ agent.id }}/')
+            .then(response => response.json())
+            .then(data => {
+                var container = document.getElementById('agent-tamagotchi');
+                var html = '';
+                switch(data.agent_status) {
+                    case 'idle':
+                        html = '<span class="tamagotchi-icon-large idle">😴</span><p>Агент спит</p><span class="zzz-animation">Zzz</span>';
+                        break;
+                    case 'scanning':
+                        html = '<span class="tamagotchi-icon-large scanning">🔍</span><p>Сканирует (' + data.scan_progress + '%)</p><div class="progress-bar"><div class="fill" style="width:' + data.scan_progress + '%"></div></div>';
+                        break;
+                    case 'uploading':
+                        html = '<span class="tamagotchi-icon-large uploading">📤</span><p>Отправляет файлы</p><span class="upload-arrow">↑</span>';
+                        break;
+                    case 'error':
+                        html = '<span class="tamagotchi-icon-large error">❌</span><p>Ошибка</p><span class="error-blink">!</span>';
+                        break;
+                    default:
+                        html = '<span class="tamagotchi-icon-large idle">😴</span><p>Агент спит</p>';
+                }
+                container.innerHTML = html;
+            })
+            .catch(() => {
+                // Если API агента недоступно, показываем офлайн
+                document.getElementById('agent-tamagotchi').innerHTML = '<span class="tamagotchi-icon-large offline">🔌</span><p>Нет связи с агентом</p>';
+            });
+    }
+
+    // Первоначальное заполнение и автообновление каждые 10 секунд
+    updateTamagotchi();
+    setInterval(updateTamagotchi, 10000);
 });
 </script>
 {% endblock %}
-
-<div class="card" style="margin-top: 1.5rem;">
-    <h2><i class="fas fa-file-alt"></i> Последние файлы</h2>
-    {% with agent.files.all|slice:":5" as last_files %}
-    {% if last_files %}
-    <table>
-        <thead><tr><th>Имя</th><th>Путь</th><th>Размер</th><th>Дата</th><th></th></tr></thead>
-        <tbody>
-        {% for f in last_files %}
-        <tr>
-            <td>{{ f.file_name }}</td>
-            <td style="font-size:0.9em;">{{ f.file_path|truncatechars:60 }}</td>
-            <td>{{ f.file_size|filesizeformat }}</td>
-            <td>{{ f.file_mtime|date:"d.m.Y H:i" }}</td>
-            <td><a href="{% url 'file_view' f.id %}" class="btn btn-outline btn-sm"><i class="fas fa-eye"></i></a></td>
-        </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-    <p style="color: var(--muted-color);">Нет загруженных файлов.</p>
-    {% endif %}
-    {% endwith %}
-</div>

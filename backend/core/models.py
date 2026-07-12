@@ -18,6 +18,15 @@ class Agent(models.Model):
     pending_restart = models.BooleanField(default=False)
     pending_update = models.BooleanField(default=False)
     last_restart = models.DateTimeField(null=True, blank=True)
+    # Новые поля статуса
+    status = models.CharField(max_length=20, default='idle', choices=[
+        ('idle', 'Ожидание'),
+        ('scanning', 'Сканирование'),
+        ('uploading', 'Отправка'),
+        ('error', 'Ошибка'),
+    ])
+    scan_progress = models.IntegerField(default=0)  # 0-100
+    status_message = models.CharField(max_length=100, default='', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
@@ -26,7 +35,6 @@ class Agent(models.Model):
         super().save(*args, **kwargs)
 
     def check_token(self, raw_token):
-        """Проверяет, соответствует ли переданный токен хранимому хешу."""
         return check_password(raw_token, self.token)
 
     def is_online(self):
@@ -114,3 +122,10 @@ class AgentConfig(models.Model):
 
     def __str__(self):
         return f"Config for {self.agent.hostname}"
+
+class HeartbeatLog(models.Model):
+    agent = models.ForeignKey(Agent, on_delete=models.CASCADE, related_name='heartbeats')
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-timestamp']
