@@ -1,6 +1,5 @@
 Вот готовый Markdown‑код для `README.md`. Скопируйте его полностью и вставьте в редактор файла на GitHub (нажмите на карандаш в правом верхнем углу страницы репозитория).
 
-```markdown
 <p align="center">
   <img src="https://i.imgur.com/5yL5zYj.png" alt="AFM Logo" width="120" />
 </p>
@@ -55,7 +54,6 @@
 git clone https://github.com/Fedoroff00/afm-server.git
 cd afm-server
 sudo bash deploy.sh
-```
 
 Скрипт автоматически:
 - установит Docker и Docker Compose (если ещё не установлены)
