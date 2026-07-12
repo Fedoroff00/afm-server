@@ -3,8 +3,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
+from django.contrib.postgres.search import SearchQuery
 from core.models import FileRecord, Incident, TriggerWord, AgentConfig, HeartbeatLog
-from .serializers import FileRecordSerializer
 from .auth import AgentTokenAuthentication
 
 class HeartbeatView(APIView):
@@ -32,7 +32,6 @@ class HeartbeatView(APIView):
             command = 'update'
             agent.pending_update = False
         agent.save()
-
         triggers = list(TriggerWord.objects.filter(is_active=True).values_list('word', flat=True))
         config, _ = AgentConfig.objects.get_or_create(agent=agent)
         config_data = {
@@ -94,25 +93,50 @@ class FileUploadView(APIView):
             if created:
                 created_count += 1
 
-            # Проверка триггеров: ищем триггер как подстроку контента или наоборот
+            # Проверка триггеров: сначала быстрый поиск подстроки, затем русский стемминг
+            detected = None
             for word in triggers:
+                # Простая проверка
                 if word.lower() in content.lower() or content.lower() in word.lower():
-                    existing = Incident.objects.filter(
-                        agent=agent,
-                        file_path=file_path,
-                        trigger_word__word=word
-                    ).exists()
-                    if not existing:
-                        Incident.objects.create(
-                            agent=agent,
-                            trigger_word=TriggerWord.objects.get(word=word),
-                            file_path=file_path,
-                            file_name=defaults['file_name'],
-                            file_owner='unknown',
-                            context=content[:200],
-                            status='new'
-                        )
+                    detected = word
                     break
+                # Если не сработало и слово длиннее 2 символов – попробуем через SearchQuery
+                if len(word) > 2:
+                    try:
+                        from django.contrib.postgres.search import SearchQuery, SearchRank
+                        # Создаём временный SearchVector для этого контента
+                        from django.contrib.postgres.search import SearchVector
+                        vec = SearchVector('content_text', config='russian')
+                        # Проверяем, есть ли совпадение (без сохранения)
+                        # Выполним запрос к только что созданному FileRecord
+                        match = FileRecord.objects.annotate(
+                            search=vec
+                        ).filter(
+                            pk=obj.pk,
+                            search=SearchQuery(word, config='russian')
+                        ).exists()
+                        if match:
+                            detected = word
+                            break
+                    except:
+                        pass
+
+            if detected:
+                existing = Incident.objects.filter(
+                    agent=agent,
+                    file_path=file_path,
+                    trigger_word__word=detected
+                ).exists()
+                if not existing:
+                    Incident.objects.create(
+                        agent=agent,
+                        trigger_word=TriggerWord.objects.get(word=detected),
+                        file_path=file_path,
+                        file_name=defaults['file_name'],
+                        file_owner='unknown',
+                        context=content[:200],
+                        status='new'
+                    )
 
         agent.total_files = FileRecord.objects.filter(agent=agent).count()
         if agent.status == 'uploading':
